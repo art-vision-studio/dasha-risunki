@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dasha — Art Gallery</title>
+
+  <style>
+    :root{
+      --card-radius: 22px;
+      --shadow: 0 18px 55px rgba(0,0,0,.45);
+      --shadow-soft: 0 10px 30px rgba(0,0,0,.30);
+      --text: rgba(255,255,255,.92);
+      --text-soft: rgba(255,255,255,.75);
+      --ui: rgba(20, 18, 30, .42);
+      --ui2: rgba(20, 18, 30, .28);
+      --stroke: rgba(255,255,255,.18);
+      --accent: rgba(255, 170, 210, .9);
+
+      --bg-dim: 0.30; /* будет меняться ползунком */
+    }
+
+    *{ box-sizing: border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-serif, Georgia, "Times New Roman", serif;
+      color: var(--text);
+      background: #0b0a10;
+      overflow-x:hidden;
+    }
+
+    /* фон */
+    .bg{
+      position: fixed;
+      inset: 0;
+      background-image: url("s.png");
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      transform: scale(1.02);
+      z-index: -3;
+    }
+    .bgDim{
+      position: fixed;
+      inset: 0;
+      background: rgba(10,8,18,var(--bg-dim));
+      z-index: -2;
+    }
+
+    /* лепестки */
+    .petals{
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      overflow:hidden;
+    }
+    .petal{
+      position:absolute;
+      width: 14px;
+      height: 10px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,210,235,.95), rgba(255,165,210,.70), rgba(255,160,200,.25));
+      border-radius: 70% 30% 70% 30%;
+      opacity:.85;
+      filter: drop-shadow(0 8px 10px rgba(0,0,0,.25));
+      animation: fall linear infinite;
+    }
+    @keyframes fall{
+      0%   { transform: translate3d(var(--x), -12vh, 0) rotate(0deg); }
+      100% { transform: translate3d(calc(var(--x) + var(--drift)), 112vh, 0) rotate(540deg); }
+    }
+
+    /* контейнер */
+    .wrap{
+      max-width: 1120px;
+      margin: 26px auto 60px;
+      padding: 0 14px;
+    }
+
+    /* верхняя панель */
+    .topbar{
+      display:flex;
+      gap: 12px;
+      align-items:center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      padding: 14px 16px;
+      border-radius: 999px;
+      background: var(--ui);
+      border: 1px solid var(--stroke);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: none;
+    }
+
+    .brand{
+      display:flex;
+      flex-direction: column;
+      line-height: 1.05;
+      gap: 4px;
+      padding: 4px 10px;
+    }
+    .brand .t1{
+      font-size: 26px;
+      letter-spacing: .4px;
+    }
+    .brand .t2{
+      font-size: 14px;
+      color: var(--text-soft);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    .controls{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
+
+    .pill{
+      display:flex;
+      gap: 8px;
+      align-items:center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: var(--ui2);
+      border: 1px solid var(--stroke);
+    }
+
+    .lang button{
+      border:0;
+      background: transparent;
+      color: var(--text-soft);
+      padding: 8px 10px;
+      border-radius: 999px;
+      cursor:pointer;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      font-size: 13px;
+    }
+    .lang button.active{
+      color: rgba(15,12,22,.95);
+      background: rgba(255,255,255,.86);
+    }
+
+    .label{
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      font-size: 13px;
+      color: var(--text-soft);
+      white-space: nowrap;
+    }
+
+    input[type="range"]{
+      width: 150px;
+      accent-color: var(--accent);
+    }
+
+    .btn{
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.10);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 999px;
+      cursor:pointer;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      font-size: 13px;
+      transition: transform .08s ease, background .2s ease;
+      user-select:none;
+      white-space: nowrap;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.on{
+      background: rgba(255,255,255,.86);
+      color: rgba(15,12,22,.95);
+      border-color: rgba(255,255,255,.55);
+    }
+
+    /* галерея */
+    .panel{
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: var(--card-radius);
+      background: transparent;  /* важно: без стекла */
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow);
+    }
+
+    .hero{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .imgBox{
+      border-radius: 22px;
+      overflow:hidden;
+      background: transparent;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    }
+
+    /* ключевое: картинка чётко, без размытия и без лишних полей */
+    .imgBox img{
+      width: 100%;
+      height: auto;
+      display:block;
+      border-radius: 22px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+
+    .captionRow{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 6px 6px 2px;
+    }
+    .caption{
+      font-size: 16px;
+      color: var(--text);
+    }
+    .count{
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .navRow{
+      display:flex;
+      justify-content:center;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .thumbs{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .thumb{
+      border-radius: 16px;
+      overflow:hidden;
+      cursor:pointer;
+      border: 2px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.04);
+      transition: transform .12s ease, border-color .2s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,.30);
+    }
+    .thumb:hover{ transform: translateY(-1px); }
+    .thumb.active{
+      border-color: rgba(255, 190, 225, .95);
+    }
+    .thumb img{
+      width:100%;
+      height: 110px;
+      object-fit: cover;
+      display:block;
+    }
+    .thumb .tcap{
+      padding: 8px 10px;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      font-size: 12px;
+      color: var(--text-soft);
+      background: rgba(10,8,18,.22);
+    }
+
+    @media (max-width: 860px){
+      .thumbs{ grid-template-columns: repeat(2, 1fr); }
+      input[type="range"]{ width: 120px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg"></div>
+  <div class="bgDim"></div>
+
+  <div class="petals" id="petals"></div>
+
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="t1" id="brandTitle">Dasha</div>
+        <div class="t2" id="brandSub">Art Gallery</div>
+      </div>
+
+      <div class="controls">
+        <div class="pill lang" id="langPill">
+          <button data-lang="ru" class="active">RU</button>
+          <button data-lang="en">EN</button>
+          <button data-lang="it">IT</button>
+          <button data-lang="es">ES</button>
+          <button data-lang="fr">FR</button>
+        </div>
+
+        <div class="pill">
+          <span class="label" id="dimLabel">Фон</span>
+          <input id="dimRange" type="range" min="0" max="70" value="30" />
+        </div>
+
+        <button class="btn" id="musicBtn">Музыка: выключено</button>
+
+        <div class="pill">
+          <span class="label" id="volLabel">Громкость</span>
+          <input id="volRange" type="range" min="0" max="100" value="45" />
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="hero">
+        <div class="imgBox">
+          <img id="mainImg" src="1.jpg" alt="Artwork" />
+        </div>
+
+        <div class="captionRow">
+          <div class="caption" id="captionText">Работа 1</div>
+          <div class="count" id="countText">1 / 4</div>
+        </div>
+
+        <div class="navRow">
+          <button class="btn" id="prevBtn">◀ Предыдущая</button>
+          <button class="btn" id="nextBtn">Следующая ▶</button>
+        </div>
+
+        <div class="thumbs" id="thumbs"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- ДАННЫЕ ----------
+    const items = [
+      {src:"1.jpg", cap:{ru:"Работа 1", en:"Artwork 1", it:"Opera 1", es:"Obra 1", fr:"Œuvre 1"}},
+      {src:"2.jpg", cap:{ru:"Работа 2", en:"Artwork 2", it:"Opera 2", es:"Obra 2", fr:"Œuvre 2"}},
+      {src:"3.jpg", cap:{ru:"Работа 3", en:"Artwork 3", it:"Opera 3", es:"Obra 3", fr:"Œuvre 3"}},
+      {src:"4.jpg", cap:{ru:"Работа 4", en:"Artwork 4", it:"Opera 4", es:"Obra 4", fr:"Œuvre 4"}},
+    ];
+
+    const uiText = {
+      ru:{ sub:"Галерея", dim:"Фон", vol:"Громкость", prev:"◀ Предыдущая", next:"Следующая ▶", musicOff:"Музыка: выключено", musicOn:"Музыка: включено" },
+      en:{ sub:"Art Gallery", dim:"Background", vol:"Volume", prev:"◀ Previous", next:"Next ▶", musicOff:"Music: off", musicOn:"Music: on" },
+      it:{ sub:"Galleria d’arte", dim:"Sfondo", vol:"Volume", prev:"◀ Precedente", next:"Successiva ▶", musicOff:"Musica: off", musicOn:"Musica: on" },
+      es:{ sub:"Galería", dim:"Fondo", vol:"Volumen", prev:"◀ Anterior", next:"Siguiente ▶", musicOff:"Música: off", musicOn:"Música: on" },
+      fr:{ sub:"Galerie", dim:"Fond", vol:"Volume", prev:"◀ Précédente", next:"Suivante ▶", musicOff:"Musique : off", musicOn:"Musique : on" },
+    };
+
+    let lang = "ru";
+    let idx = 0;
+
+    const mainImg = document.getElementById("mainImg");
+    const captionText = document.getElementById("captionText");
+    const countText = document.getElementById("countText");
+    const thumbsEl = document.getElementById("thumbs");
+
+    const brandSub = document.getElementById("brandSub");
+    const dimLabel = document.getElementById("dimLabel");
+    const volLabel = document.getElementById("volLabel");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+
+    function renderThumbs(){
+      thumbsEl.innerHTML = "";
+      items.forEach((it, i) => {
+        const d = document.createElement("div");
+        d.className = "thumb" + (i===idx ? " active":"");
+        d.innerHTML = `
+          <img src="${it.src}" alt="">
+          <div class="tcap">${it.cap[lang]}</div>
+        `;
+        d.addEventListener("click", () => {
+          idx = i;
+          update();
+        });
+        thumbsEl.appendChild(d);
+      });
+    }
+
+    function update(){
+      const it = items[idx];
+      mainImg.src = it.src;
+      captionText.textContent = it.cap[lang];
+      countText.textContent = (idx+1) + " / " + items.length;
+
+      // кнопки и подписи
+      brandSub.textContent = uiText[lang].sub;
+      dimLabel.textContent = uiText[lang].dim;
+      volLabel.textContent = uiText[lang].vol;
+      prevBtn.textContent = uiText[lang].prev;
+      nextBtn.textContent = uiText[lang].next;
+
+      renderThumbs();
+      updateMusicLabel();
+    }
+
+    // ---------- ЯЗЫКИ ----------
+    document.getElementById("langPill").addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-lang]");
+      if(!b) return;
+      lang = b.dataset.lang;
+
+      document.querySelectorAll(".lang button").forEach(x => x.classList.remove("active"));
+      b.classList.add("active");
+
+      update();
+    });
+
+    // ---------- НАВИГАЦИЯ ----------
+    document.getElementById("prevBtn").addEventListener("click", () => {
+      idx = (idx - 1 + items.length) % items.length;
+      update();
+    });
+    document.getElementById("nextBtn").addEventListener("click", () => {
+      idx = (idx + 1) % items.length;
+      update();
+    });
+
+    // ---------- ПОЛЗУНОК ТЕМНОТЫ ФОНА ----------
+    const dimRange = document.getElementById("dimRange");
+    function setDimFromRange(){
+      const v = Number(dimRange.value); // 0..70
+      const dim = v / 100;              // 0..0.70
+      document.documentElement.style.setProperty("--bg-dim", dim.toFixed(2));
+    }
+    dimRange.addEventListener("input", setDimFromRange);
+    setDimFromRange();
+
+    // ---------- ЛЕПЕСТКИ ----------
+    const petalsWrap = document.getElementById("petals");
+    function spawnPetals(n=18){
+      petalsWrap.innerHTML = "";
+      for(let i=0;i<n;i++){
+        const p = document.createElement("div");
+        p.className = "petal";
+        const left = Math.random()*100;
+        const dur = 12 + Math.random()*14;
+        const delay = -Math.random()*dur;
+        const drift = (Math.random()*22 - 11) + "vw";
+        p.style.left = left + "vw";
+        p.style.top = (-10 - Math.random()*80) + "vh";
+        p.style.setProperty("--x", left + "vw");
+        p.style.setProperty("--drift", drift);
+        p.style.animationDuration = dur + "s";
+        p.style.animationDelay = delay + "s";
+        p.style.opacity = (0.55 + Math.random()*0.45).toFixed(2);
+        p.style.transform = `translate3d(0,0,0) rotate(${Math.random()*180}deg)`;
+        petalsWrap.appendChild(p);
+      }
+    }
+    spawnPetals(20);
+
+    // ---------- МУЗЫКА (плавное вкл/выкл без резкого обрыва) ----------
+    const musicBtn = document.getElementById("musicBtn");
+    const volRange = document.getElementById("volRange");
+
+    const audio = new Audio("1.mp3");
+    audio.loop = true;
+    audio.preload = "auto";
+
+    let isPlaying = false;
+    let fadeTimer = null;
+
+    function targetVolume(){
+      return Math.max(0, Math.min(1, Number(volRange.value)/100));
+    }
+
+    function clearFade(){
+      if(fadeTimer){ clearInterval(fadeTimer); fadeTimer=null; }
+    }
+
+    function fadeTo(to, ms=500, onDone){
+      clearFade();
+      const from = audio.volume;
+      const steps = 20;
+      const stepMs = Math.max(15, Math.floor(ms/steps));
+      let k = 0;
+      fadeTimer = setInterval(() => {
+        k++;
+        const t = k/steps;
+        audio.volume = from + (to - from)*t;
+        if(k>=steps){
+          clearFade();
+          audio.volume = to;
+          if(onDone) onDone();
+        }
+      }, stepMs);
+    }
+
+    function updateMusicLabel(){
+      musicBtn.textContent = isPlaying ? uiText[lang].musicOn : uiText[lang].musicOff;
+      musicBtn.classList.toggle("on", isPlaying);
+    }
+
+    async function playMusic(){
+      // стартуем тихо и плавно поднимаем
+      audio.volume = 0.0;
+      try{
+        await audio.play();
+        isPlaying = true;
+        fadeTo(targetVolume(), 650);
+      }catch(e){
+        // если браузер не дал (бывает) — пусть просто не падает
+        isPlaying = false;
+      }
+      updateMusicLabel();
+    }
+
+    function stopMusic(){
+      // плавно уходим в 0, потом пауза
+      fadeTo(0.0, 650, () => {
+        audio.pause();
+        // не сбрасываем время, чтобы при включении продолжило (если хочешь с начала — скажи)
+        isPlaying = false;
+        updateMusicLabel();
+      });
+    }
+
+    musicBtn.addEventListener("click", () => {
+      if(isPlaying) stopMusic();
+      else playMusic();
+    });
+
+    // громкость меняется мягко во время проигрывания
+    volRange.addEventListener("input", () => {
+      if(!isPlaying) return;
+      fadeTo(targetVolume(), 220);
+    });
+
+    update();
+  </script>
+  <footer style="text-align:center; padding:20px 10px; font-size:14px; color:#ddd; letter-spacing:1px;">
+  © 2026 — Derev Studio
+</footer>
+
+</body>
+</html>
