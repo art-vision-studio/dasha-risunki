@@ -1,6 +1,5 @@
 backend:
   name: github
-  base_url: https://dasha-risunki.vercel.app
   repo: art-vision-studio/dasha-risunki
   branch: main
 
