@@ -10,11 +10,11 @@ public_folder: "/images"
 
 collections:
   - name: "gallery"
-    label: "Галерея"
-    folder: "content/gallery"
-    create: true
-    slug: "{{slug}}"
-    fields:
-      - { label: "Название", name: "title", widget: "string" }
-      - { label: "Картинка", name: "image", widget: "image" }
-      - { label: "Описание", name: "description", widget: "text", required: false }
+    label: "Загрузить картинку 💖✨"
+    files:
+      - name: "items"
+        label: "Добавить изображение 🎨📸"
+        file: "content/gallery.json"
+        fields:
+          - { label: "Выбери файл 💗", name: "image", widget: "image" }
+          - { label: "Подпись ✨", name: "description", widget: "string", required: false }
