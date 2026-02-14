@@ -2,7 +2,7 @@ backend:
   name: github
   repo: art-vision-studio/dasha-risunki
   branch: main
-  base_url: https://netlify-cms-github-oauth-provider-peach.vercel.app
+  base_url: https://netlify-cms-github-oauth-provider-peach.vercel.app/
   auth_endpoint: auth
   api_root: https://api.github.com
 media_folder: "images"
