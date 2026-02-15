@@ -541,6 +541,56 @@
   <footer style="text-align:center; padding:20px 10px; font-size:14px; color:#ddd; letter-spacing:1px;">
   © 2026 — Derev Studio
 </footer>
+<script>
+(function () {
 
+  const gallery = document.createElement("div");
+  gallery.id = "gallery";
+  gallery.style.display = "grid";
+  gallery.style.gridTemplateColumns = "repeat(auto-fill,minmax(220px,1fr))";
+  gallery.style.gap = "12px";
+  gallery.style.margin = "20px 0";
+
+  const footer = document.querySelector("footer");
+  if (footer && footer.parentNode)
+    footer.parentNode.insertBefore(gallery, footer);
+  else
+    document.body.appendChild(gallery);
+
+  fetch("content/gallery.json?v=" + Date.now(), { cache: "no-store" })
+    .then(r => {
+      if (!r.ok) throw new Error("json не найден");
+      return r.json();
+    })
+    .then(data => {
+
+      if (!Array.isArray(data)) throw new Error("json должен быть массивом");
+
+      data.forEach((item,i) => {
+        if (!item.image) return;
+
+        const img = document.createElement("img");
+        img.src = String(item.image).replace(/^\/+/, "");
+        img.alt = "image " + (i+1);
+        img.loading = "lazy";
+        img.style.width = "100%";
+        img.style.borderRadius = "10px";
+
+        img.onerror = () => console.log("Ошибка картинки:", img.src);
+
+        gallery.appendChild(img);
+      });
+
+      if (!gallery.children.length)
+        gallery.textContent = "Нет изображений";
+
+    })
+    .catch(err => {
+      console.error(err);
+      gallery.textContent = "Ошибка загрузки галереи";
+    });
+
+})();
+</script>
 </body>
 </html>
