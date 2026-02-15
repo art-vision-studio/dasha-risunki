@@ -7,8 +7,7 @@
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-JZ7939BMV0');
-  </script>
-
+  </script>  
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dasha — Art Gallery</title>
@@ -24,7 +23,8 @@
       --ui2: rgba(20, 18, 30, .28);
       --stroke: rgba(255,255,255,.18);
       --accent: rgba(255, 170, 210, .9);
-      --bg-dim: 0.30;
+
+      --bg-dim: 0.30; /* будет меняться ползунком */
     }
 
     *{ box-sizing: border-box; }
@@ -37,6 +37,7 @@
       overflow-x:hidden;
     }
 
+    /* фон */
     .bg{
       position: fixed;
       inset: 0;
@@ -54,6 +55,7 @@
       z-index: -2;
     }
 
+    /* лепестки */
     .petals{
       position: fixed;
       inset: 0;
@@ -76,12 +78,14 @@
       100% { transform: translate3d(calc(var(--x) + var(--drift)), 112vh, 0) rotate(540deg); }
     }
 
+    /* контейнер */
     .wrap{
       max-width: 1120px;
       margin: 26px auto 60px;
       padding: 0 14px;
     }
 
+    /* верхняя панель */
     .topbar{
       display:flex;
       gap: 12px;
@@ -178,11 +182,12 @@
       border-color: rgba(255,255,255,.55);
     }
 
+    /* галерея */
     .panel{
       margin-top: 18px;
       padding: 16px;
       border-radius: var(--card-radius);
-      background: transparent;
+      background: transparent;  /* важно: без стекла */
       border: 1px solid rgba(255,255,255,.14);
       box-shadow: var(--shadow);
     }
@@ -201,6 +206,7 @@
       justify-content:center;
       align-items:center;
     }
+
     .imgBox img{
       width: 100%;
       height: auto;
@@ -277,6 +283,7 @@
 <body>
   <div class="bg"></div>
   <div class="bgDim"></div>
+
   <div class="petals" id="petals"></div>
 
   <div class="wrap">
@@ -312,12 +319,12 @@
     <div class="panel">
       <div class="hero">
         <div class="imgBox">
-          <img id="mainImg" src="" alt="Artwork" />
+          <img id="mainImg" src="1.jpg" alt="Artwork" />
         </div>
 
         <div class="captionRow">
-          <div class="caption" id="captionText">Загрузка…</div>
-          <div class="count" id="countText">0 / 0</div>
+          <div class="caption" id="captionText">Работа 1</div>
+          <div class="count" id="countText">1 / 4</div>
         </div>
 
         <div class="navRow">
@@ -330,44 +337,30 @@
     </div>
   </div>
 
-  <footer style="text-align:center; padding:20px 10px; font-size:14px; color:#ddd; letter-spacing:1px;">
-    © 2026 — Derev Studio
-  </footer>
-
   <script>
-    // ---------- ТЕКСТЫ ----------
-    const uiText = {
-      ru:{ sub:"Галерея", dim:"Фон", vol:"Громкость", prev:"◀ Предыдущая", next:"Следующая ▶", musicOff:"Музыка: выключено", musicOn:"Музыка: включено", loading:"Загрузка…", empty:"Нет изображений", err:"Ошибка загрузки галереи" },
-      en:{ sub:"Art Gallery", dim:"Background", vol:"Volume", prev:"◀ Previous", next:"Next ▶", musicOff:"Music: off", musicOn:"Music: on", loading:"Loading…", empty:"No images", err:"Gallery load error" },
-      it:{ sub:"Galleria d’arte", dim:"Sfondo", vol:"Volume", prev:"◀ Precedente", next:"Successiva ▶", musicOff:"Musica: off", musicOn:"Musica: on", loading:"Caricamento…", empty:"Nessuna immagine", err:"Errore galleria" },
-      es:{ sub:"Galería", dim:"Fondo", vol:"Volumen", prev:"◀ Anterior", next:"Siguiente ▶", musicOff:"Música: off", musicOn:"Música: on", loading:"Cargando…", empty:"Sin imágenes", err:"Error de galería" },
-      fr:{ sub:"Galerie", dim:"Fond", vol:"Volume", prev:"◀ Précédente", next:"Suivante ▶", musicOff:"Musique : off", musicOn:"Musique : on", loading:"Chargement…", empty:"Aucune image", err:"Erreur galerie" },
-    };
-
+    // ---------- ДАННЫЕ ----------
+    let items = [];   // ← будет заполнено из JSON
     let lang = "ru";
     let idx = 0;
-    let items = []; // будет из content/gallery.json
 
-    const mainImg = document.getElementById("mainImg");
+    const mainImg    = document.getElementById("mainImg");
     const captionText = document.getElementById("captionText");
-    const countText = document.getElementById("countText");
-    const thumbsEl = document.getElementById("thumbs");
+    const countText   = document.getElementById("countText");
+    const thumbsEl    = document.getElementById("thumbs");
 
     const brandSub = document.getElementById("brandSub");
     const dimLabel = document.getElementById("dimLabel");
     const volLabel = document.getElementById("volLabel");
-    const prevBtn = document.getElementById("prevBtn");
-    const nextBtn = document.getElementById("nextBtn");
+    const prevBtn  = document.getElementById("prevBtn");
+    const nextBtn  = document.getElementById("nextBtn");
 
-    function makeCaps(n){
-      return {
-        ru: "Работа " + n,
-        en: "Artwork " + n,
-        it: "Opera " + n,
-        es: "Obra " + n,
-        fr: "Œuvre " + n
-      };
-    }
+    const uiText = {
+      ru:{ sub:"Галерея", dim:"Фон", vol:"Громкость", prev:"◀ Предыдущая", next:"Следующая ▶", musicOff:"Музыка: выключено", musicOn:"Музыка: включено" },
+      en:{ sub:"Art Gallery", dim:"Background", vol:"Volume", prev:"◀ Previous", next:"Next ▶", musicOff:"Music: off", musicOn:"Music: on" },
+      it:{ sub:"Galleria d’arte", dim:"Sfondo", vol:"Volume", prev:"◀ Precedente", next:"Successiva ▶", musicOff:"Musica: off", musicOn:"Musica: on" },
+      es:{ sub:"Galería", dim:"Fondo", vol:"Volumen", prev:"◀ Anterior", next:"Siguiente ▶", musicOff:"Música: off", musicOn:"Música: on" },
+      fr:{ sub:"Galerie", dim:"Fond", vol:"Volume", prev:"◀ Précédente", next:"Suivante ▶", musicOff:"Musique : off", musicOn:"Musique : on" },
+    };
 
     function renderThumbs(){
       thumbsEl.innerHTML = "";
@@ -376,7 +369,7 @@
         d.className = "thumb" + (i===idx ? " active":"");
         d.innerHTML = `
           <img src="${it.src}" alt="">
-          <div class="tcap">${(it.cap && it.cap[lang]) ? it.cap[lang] : ""}</div>
+          <div class="tcap">${it.cap[lang]}</div>
         `;
         d.addEventListener("click", () => {
           idx = i;
@@ -387,25 +380,16 @@
     }
 
     function update(){
-      if(!items.length){
-        mainImg.src = "";
-        captionText.textContent = uiText[lang].empty;
-        countText.textContent = "0 / 0";
-        thumbsEl.innerHTML = "";
-        brandSub.textContent = uiText[lang].sub;
-        dimLabel.textContent = uiText[lang].dim;
-        volLabel.textContent = uiText[lang].vol;
-        prevBtn.textContent = uiText[lang].prev;
-        nextBtn.textContent = uiText[lang].next;
-        updateMusicLabel();
+      if (!items.length) {
+        mainImg.src = "1.jpg";
+        captionText.textContent = "Галерея пуста";
+        countText.textContent = "— / —";
         return;
       }
 
-      idx = Math.max(0, Math.min(idx, items.length-1));
       const it = items[idx];
-
       mainImg.src = it.src;
-      captionText.textContent = (it.cap && it.cap[lang]) ? it.cap[lang] : "";
+      captionText.textContent = it.cap[lang];
       countText.textContent = (idx+1) + " / " + items.length;
 
       brandSub.textContent = uiText[lang].sub;
@@ -432,12 +416,12 @@
 
     // ---------- НАВИГАЦИЯ ----------
     document.getElementById("prevBtn").addEventListener("click", () => {
-      if(!items.length) return;
+      if (!items.length) return;
       idx = (idx - 1 + items.length) % items.length;
       update();
     });
     document.getElementById("nextBtn").addEventListener("click", () => {
-      if(!items.length) return;
+      if (!items.length) return;
       idx = (idx + 1) % items.length;
       update();
     });
@@ -490,9 +474,11 @@
     function targetVolume(){
       return Math.max(0, Math.min(1, Number(volRange.value)/100));
     }
+
     function clearFade(){
       if(fadeTimer){ clearInterval(fadeTimer); fadeTimer=null; }
     }
+
     function fadeTo(to, ms=500, onDone){
       clearFade();
       const from = audio.volume;
@@ -510,10 +496,12 @@
         }
       }, stepMs);
     }
+
     function updateMusicLabel(){
       musicBtn.textContent = isPlaying ? uiText[lang].musicOn : uiText[lang].musicOff;
       musicBtn.classList.toggle("on", isPlaying);
     }
+
     async function playMusic(){
       audio.volume = 0.0;
       try{
@@ -525,6 +513,7 @@
       }
       updateMusicLabel();
     }
+
     function stopMusic(){
       fadeTo(0.0, 650, () => {
         audio.pause();
@@ -532,54 +521,118 @@
         updateMusicLabel();
       });
     }
+
     musicBtn.addEventListener("click", () => {
       if(isPlaying) stopMusic();
       else playMusic();
     });
+
     volRange.addEventListener("input", () => {
       if(!isPlaying) return;
       fadeTo(targetVolume(), 220);
     });
 
-    // ---------- ГЛАВНОЕ: ЗАГРУЗКА ИЗ content/gallery.json ----------
-    async function loadGallery(){
-      captionText.textContent = uiText[lang].loading;
-      countText.textContent = "0 / 0";
-      mainImg.src = "";
+    // ---------- ЗАГРУЗКА ГАЛЕРЕИ ИЗ JSON ----------
+    fetch("content/gallery.json?v=" + Date.now(), { cache: "no-store" })
+      .then(r => {
+        if (!r.ok) throw new Error("Не удалось загрузить gallery.json");
+        return r.json();
+      })
+      .then(data => {
+        if (!Array.isArray(data)) {
+          console.error("gallery.json должен быть массивом");
+          throw new Error("Неверный формат");
+        }
 
-      try{
-        const r = await fetch("content/gallery.json?v=" + Date.now(), { cache: "no-store" });
-        if(!r.ok) throw new Error("gallery.json not found");
-        const data = await r.json();
-        if(!Array.isArray(data)) throw new Error("gallery.json must be array");
-
-        // ожидаем формат: [{ "image": "/images/xxx.jpg" }, ...]
         items = data
-          .map((x, n) => {
-            const raw = (x && x.image) ? String(x.image) : "";
-            if(!raw) return null;
+          .map(item => {
+            const src = (item.image || item.src || "").trim().replace(/^\/+/, "");
+            if (!src) return null;
 
-            // ВАЖНО: убираем ведущий "/" чтобы работало на GitHub Pages в подпапке
-            const src = raw.replace(/^\/+/, "");
-
-            return { src, cap: makeCaps(n+1) };
+            return {
+              src,
+              cap: {
+                ru: item.caption_ru || item.caption || item.title || "Без названия",
+                en: item.caption_en || item.caption || "Untitled",
+                it: item.caption_it || item.caption || "Senza titolo",
+                es: item.caption_es || item.caption || "Sin título",
+                fr: item.caption_fr || item.caption || "Sans titre"
+              }
+            };
           })
           .filter(Boolean);
 
-        idx = 0;
-        update();
-      }catch(e){
-        console.error(e);
-        items = [];
-        captionText.textContent = uiText[lang].err;
-        countText.textContent = "0 / 0";
-        thumbsEl.innerHTML = "";
-        mainImg.src = "";
-      }
-    }
+        if (items.length > 0) {
+          idx = 0;
+          update();
+        } else {
+          console.warn("Нет валидных изображений в gallery.json");
+          mainImg.src = "1.jpg";
+          captionText.textContent = "Нет картинок";
+          countText.textContent = "— / —";
+        }
+      })
+      .catch(err => {
+        console.error("Ошибка загрузки галереи:", err);
+        mainImg.src = "1.jpg";
+        captionText.textContent = "Ошибка галереи";
+      });
 
-    loadGallery();
-    update(); // чтобы тексты кнопок/музыки выставились сразу
+    // первый вызов update (на случай если json ещё не загрузился)
+    update();
+  </script>
+
+  <footer style="text-align:center; padding:20px 10px; font-size:14px; color:#ddd; letter-spacing:1px;">
+  © 2026 — Derev Studio
+  </footer>
+
+  <script>
+  (function () {
+    const gallery = document.createElement("div");
+    gallery.id = "gallery";
+    gallery.style.display = "grid";
+    gallery.style.gridTemplateColumns = "repeat(auto-fill,minmax(220px,1fr))";
+    gallery.style.gap = "12px";
+    gallery.style.margin = "20px 0";
+
+    const footer = document.querySelector("footer");
+    if (footer && footer.parentNode)
+      footer.parentNode.insertBefore(gallery, footer);
+    else
+      document.body.appendChild(gallery);
+
+    fetch("content/gallery.json?v=" + Date.now(), { cache: "no-store" })
+      .then(r => {
+        if (!r.ok) throw new Error("json не найден");
+        return r.json();
+      })
+      .then(data => {
+        if (!Array.isArray(data)) throw new Error("json должен быть массивом");
+
+        data.forEach((item,i) => {
+          if (!item.image) return;
+
+          const img = document.createElement("img");
+          img.src = String(item.image).replace(/^\/+/, "");
+          img.alt = "image " + (i+1);
+          img.loading = "lazy";
+          img.style.width = "100%";
+          img.style.borderRadius = "10px";
+
+          img.onerror = () => console.log("Ошибка картинки:", img.src);
+
+          gallery.appendChild(img);
+        });
+
+        if (!gallery.children.length)
+          gallery.textContent = "Нет изображений";
+
+      })
+      .catch(err => {
+        console.error(err);
+        gallery.textContent = "Ошибка загрузки галереи";
+      });
+  })();
   </script>
 </body>
 </html>
